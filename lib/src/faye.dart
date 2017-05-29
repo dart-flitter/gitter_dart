@@ -16,8 +16,11 @@ class GitterFayeSubscriber {
   String _clientId;
   WebSocket _socket;
   Stream _socketStream;
+  var _timeout = 120000;
+  Timer _timeoutTimer;
 
   String get clientId => _clientId;
+
   User get user => _user;
 
   GitterFayeSubscriber(this._token);
@@ -45,12 +48,28 @@ class GitterFayeSubscriber {
     _user = new User.fromJson(message.ext["context"]["user"]);
   }
 
-  String _generateId() => "${_id++}";
+  String _generateId() {
+    if (_id < 0) _id = 0;
+    return "${_id++}";
+  }
 
-  connect() async {
+  connect({bool keepAlive: true}) async {
     await _handshake();
     _socket = await WebSocket.connect(_urlWs);
     _socketStream = _socket.asBroadcastStream();
+    final res = await _connect();
+    _timeout = res['advice']["timeout"];
+    if (keepAlive) {
+      _timeoutTimer = new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+      _listener ??= listen((_) {
+        _timeoutTimer.cancel();
+        _timeoutTimer =
+        new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+      });
+    }
+  }
+
+  Future<Map> _connect() async {
     final message = {
       "channel": "/meta/connect",
       "id": _generateId(),
@@ -59,11 +78,15 @@ class GitterFayeSubscriber {
       "advice": {"timeout": 0}
     };
     _socket.add(JSON.encode(message));
+
+    final res = JSON.decode(await _socketStream.first).first;
+    if (!res["successful"]) {
+      throw new Exception("'connect' failed");
+    }
+    return res;
   }
 
   subscribe(String subscription, [OnMessage handler]) {
-    _listener ??= listen(null);
-
     _mapper[subscription] ??= [];
     if (handler != null) {
       _mapper[subscription].add(handler);
@@ -94,17 +117,24 @@ class GitterFayeSubscriber {
 
   subscribeToRoom(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId', handler);
+
   subscribeToChatMessages(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId/chatMessages', handler);
+
   subscribeToRoomEvents(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId/events', handler);
+
   subscribeToRoomUsers(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId/users', handler);
+
   subscribeToUser(String userId, [OnMessage handler]) =>
       subscribe("/api/v1/user/$userId", handler);
+
   subscribeToUserRooms(String userId, [OnMessage handler]) =>
       subscribe("/api/v1/user/$userId/rooms", handler);
-  subscribeToUserRoomUnreadItems(String roomId, String userId, [OnMessage handler]) =>
+
+  subscribeToUserRoomUnreadItems(String roomId, String userId,
+          [OnMessage handler]) =>
       subscribe("/api/v1/user/$userId/rooms/$roomId/unreadItems", handler);
 
   _dispatch(List<GitterFayeMessage> events, OnMessage onData) {
@@ -147,6 +177,7 @@ class GitterFayeSubscriber {
 typedef void OnMessage(List<GitterFayeMessage> event);
 
 class GitterFayeNotifications {
-  static const String unreadItems = "unread_items"; // data: { notification: "unread_items", items: {} }, ext: { c: COUNT } }
+  static const String unreadItems =
+      "unread_items"; // data: { notification: "unread_items", items: {} }, ext: { c: COUNT } }
   static const String unreadItemsRemoved = "unread_items_removed";
 }
