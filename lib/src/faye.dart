@@ -60,11 +60,12 @@ class GitterFayeSubscriber {
     final res = await _connect();
     _timeout = res['advice']["timeout"];
     if (keepAlive) {
-      _timeoutTimer = new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
-      _listener ??= listen((_) {
+      _timeoutTimer =
+          new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+      _listener ??= _listen((_) {
         _timeoutTimer.cancel();
         _timeoutTimer =
-        new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+            new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
       });
     }
   }
@@ -79,7 +80,15 @@ class GitterFayeSubscriber {
     };
     _socket.add(JSON.encode(message));
 
-    final res = JSON.decode(await _socketStream.first).first;
+    final res = JSON
+        .decode(await _socketStream.firstWhere((data) {
+          final decode = JSON.decode(data);
+          return (decode as List).firstWhere(
+                  (msg) => msg["channel"] == "/meta/connect",
+                  orElse: () => null) !=
+              null;
+        }))
+        .first;
     if (!res["successful"]) {
       throw new Exception("'connect' failed");
     }
@@ -121,6 +130,9 @@ class GitterFayeSubscriber {
   subscribeToChatMessages(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId/chatMessages', handler);
 
+  unsubscribeToChatMessages(String roomId, [OnMessage handler]) =>
+      unsubscribe('/api/v1/rooms/$roomId/chatMessages', handler);
+
   subscribeToRoomEvents(String roomId, [OnMessage handler]) =>
       subscribe('/api/v1/rooms/$roomId/events', handler);
 
@@ -137,11 +149,11 @@ class GitterFayeSubscriber {
           [OnMessage handler]) =>
       subscribe("/api/v1/user/$userId/rooms/$roomId/unreadItems", handler);
 
-  _dispatch(List<GitterFayeMessage> events, OnMessage onData) {
+  _dispatch(List<GitterFayeMessage> events) {
     final _mapping = <String, List<GitterFayeMessage>>{};
     events.forEach((GitterFayeMessage msg) {
-      _mapping[msg.subscription] ??= [];
-      _mapping[msg.subscription].add(msg);
+      _mapping[msg.subscription ?? msg.channel] ??= [];
+      _mapping[msg.subscription ?? msg.channel].add(msg);
     });
     if (_mapping.isNotEmpty) {
       _mapping.forEach((String subscription, events) {
@@ -150,21 +162,27 @@ class GitterFayeSubscriber {
         });
       });
     }
-    if (onData != null) {
-      onData(events);
-    }
   }
 
-  StreamSubscription<List<GitterFayeMessage>> listen(OnMessage onData,
-          {Function onError, void onDone(), bool cancelOnError}) =>
+  StreamSubscription<List<GitterFayeMessage>> _listen(OnMessage onData,
+          {Function onError,
+          void onDone(),
+          bool cancelOnError,
+          bool dispatch: true}) =>
       _socketStream.listen((data) {
         final decode = JSON.decode(data);
+        var messages;
         if (decode is Iterable) {
-          _dispatch(
-              decode.map((d) => new GitterFayeMessage.fromJson(d)).toList(),
-              onData);
+          messages =
+              decode.map((d) => new GitterFayeMessage.fromJson(d)).toList();
         } else {
-          _dispatch([new GitterFayeMessage.fromJson(decode)], onData);
+          messages = [new GitterFayeMessage.fromJson(decode)];
+        }
+        if (dispatch) {
+          _dispatch(messages);
+        }
+        if (onData != null) {
+          onData(messages);
         }
       }, onDone: onDone, cancelOnError: cancelOnError);
 

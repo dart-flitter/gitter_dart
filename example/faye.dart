@@ -14,12 +14,11 @@ main() async {
     });
   };
 
-  subscriber.subscribeToRoom(roomId);
-  subscriber.subscribeToChatMessages(roomId);
-  subscriber.subscribeToRoomEvents(roomId);
-  subscriber.subscribeToRoomUsers(roomId);
-  subscriber.subscribeToUser(subscriber.user.id);
-  subscriber.subscribeToUserRoomUnreadItems(roomId, subscriber.user.id);
-
-  subscriber.listen(messageHandler);
+  subscriber.subscribeToRoom(roomId, messageHandler);
+  subscriber.subscribeToChatMessages(roomId, messageHandler);
+  subscriber.subscribeToRoomEvents(roomId, messageHandler);
+  subscriber.subscribeToRoomUsers(roomId, messageHandler);
+  subscriber.subscribeToUser(subscriber.user.id, messageHandler);
+  subscriber.subscribeToUserRoomUnreadItems(
+      roomId, subscriber.user.id, messageHandler);
 }

@@ -173,7 +173,7 @@ class RoomApi {
   final Map<String, Stream<Message>> _streamMapper = {};
 
   Future<Stream<Message>> streamMessagesOfRoom(String roomId) async {
-    if (_streamMapper.containsKey(roomId)) {
+    if (_streamMapper[roomId] != null) {
       return _streamMapper[roomId];
     }
     String url = "https://stream.gitter.im/v1/rooms/$roomId/chatMessages";
@@ -181,13 +181,16 @@ class RoomApi {
     req.headers.addAll(_getHeaders(token));
     http.StreamedResponse responseStream = await _client.send(req);
 
-    return _streamMapper[roomId] = responseStream.stream
+    _streamMapper[roomId] = responseStream.stream.asBroadcastStream()
         .map((Iterable<int> data) =>
             (new String.fromCharCodes(data)).replaceAll("\r", ""))
         .where((String json) => json != " \n" && json != "\n")
         .map((String json) => new Message.fromJson(JSON.decode(json)))
         .asBroadcastStream();
+
+    return _streamMapper[roomId];
   }
+
 }
 
 class GitterApi {
