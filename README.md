@@ -1,16 +1,11 @@
 # gitter
 
-A library for Dart developers. It is awesome.
+A Dart library to communicate with the Gitter API
 
 ## Usage
 
-A simple usage example:
-
-    import 'package:gitter/gitter.dart';
-
-    main() {
-      var awesome = new Awesome();
-    }
+- Example folder
+- [Flutter Gitter application](https://github.com/dart-flitter/flitter/tree/master/lib)
 
 ## Features and bugs
 

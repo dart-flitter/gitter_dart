@@ -1,7 +1,7 @@
 name: gitter
 description: Library to use the Gitter api
 version: 0.1.0
-homepage: https://github.com/dart-flitter/gitter
+homepage: https://github.com/dart-flitter/gitter_dart
 authors:
   - Kevin Segaud <segaud.kevin@gmail.com>
   - Hadrien Lejard <hadrien.lejard@gmail.com
