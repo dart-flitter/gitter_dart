@@ -18,6 +18,8 @@ class GitterFayeMessage {
   String clientId;
   String channel;
   String subscription;
+  bool successful;
+  Map<String, dynamic> advice;
   Map<String, dynamic> data;
   Map<String, dynamic> ext;
 

@@ -21,8 +21,14 @@ abstract class _$GitterFayeMessageSerializer
       if (model.channel != null) {
         ret["channel"] = model.channel;
       }
+      if (model.successful != null) {
+        ret["successful"] = model.successful;
+      }
       if (model.subscription != null) {
         ret["subscription"] = model.subscription;
+      }
+      if (model.advice != null) {
+        ret["advice"] = model.advice;
       }
       if (model.data != null) {
         ret["data"] = model.data;
@@ -48,7 +54,9 @@ abstract class _$GitterFayeMessageSerializer
     model.id = map["id"];
     model.clientId = map["clientId"];
     model.channel = map["channel"];
+    model.successful = map["successful"];
     model.subscription = map["subscription"];
+    model.advice = map["advice"];
     model.data = map["data"];
     model.ext = map["ext"];
     return model;

@@ -53,49 +53,72 @@ class GitterFayeSubscriber {
     return "${_id++}";
   }
 
+  _initListener() {
+    _listener ??= _listen((_) {
+      _timeoutTimer?.cancel();
+      _timeoutTimer =
+      new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+    });
+  }
+
   connect({bool keepAlive: true}) async {
     await _handshake();
+    _listener?.cancel();
+    _listener = null;
     _socket = await WebSocket.connect(_urlWs);
     _socketStream = _socket.asBroadcastStream();
+
+    _initListener();
+
     final res = await _connect();
-    _timeout = res['advice']["timeout"];
+    _timeout = res.advice["timeout"];
+    _timeoutTimer?.cancel();
     if (keepAlive) {
       _timeoutTimer =
           new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
-      _listener ??= _listen((_) {
-        _timeoutTimer.cancel();
-        _timeoutTimer =
-            new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
-      });
     }
   }
 
-  Future<Map> _connect() async {
+  Future<GitterFayeMessage> _connect() async {
     final message = {
-      "channel": "/meta/connect",
-      "id": _generateId(),
       "connectionType": "websocket",
-      "clientId": clientId,
       "advice": {"timeout": 0}
     };
-    _socket.add(JSON.encode(message));
+    final channel = "/meta/connect";
 
-    final res = JSON
-        .decode(await _socketStream.firstWhere((data) {
-          final decode = JSON.decode(data);
-          return (decode as List).firstWhere(
-                  (msg) => msg["channel"] == "/meta/connect",
-                  orElse: () => null) !=
-              null;
-        }))
-        .first;
-    if (!res["successful"]) {
-      throw new Exception("'connect' failed");
+    final completer = new Completer<GitterFayeMessage>();
+
+    _send(channel, message, (List<GitterFayeMessage> messages) {
+      for (GitterFayeMessage msg in messages) {
+        if (msg.successful == true) {
+          if (completer.isCompleted == false) {
+            completer.complete(msg);
+          }
+          _mapper[msg.channel] = [];
+        } else if (msg.successful == false) {
+            throw new Exception("'connect' failed");
+        }
+      }
+    });
+    return completer.future;
+  }
+
+  _send(String channel, Map<String, dynamic> message, [OnMessage onResponse]) {
+    _mapper[channel] ??= [];
+    if (onResponse != null) {
+      _mapper[channel].add(onResponse);
     }
-    return res;
+
+    message ??= {};
+    message["clientId"] = clientId;
+    message["channel"] = channel;
+    message["id"]=  _generateId();
+
+    _socket.add(JSON.encode(message));
   }
 
   subscribe(String subscription, [OnMessage handler]) {
+    _initListener();
     _mapper[subscription] ??= [];
     if (handler != null) {
       _mapper[subscription].add(handler);
@@ -157,9 +180,12 @@ class GitterFayeSubscriber {
     });
     if (_mapping.isNotEmpty) {
       _mapping.forEach((String subscription, events) {
-        _mapper[subscription]?.forEach((handler) {
-          handler(events);
-        });
+        if (_mapper[subscription]?.isNotEmpty) {
+          final list = new List.from(_mapper[subscription]);
+          list.forEach((handler) {
+            handler(events);
+          });
+        }
       });
     }
   }
@@ -190,6 +216,8 @@ class GitterFayeSubscriber {
     _socket.close();
     _listener.cancel();
   }
+
+  bool get isClose => _socket.closeCode != null;
 }
 
 typedef void OnMessage(List<GitterFayeMessage> event);
