@@ -61,6 +61,14 @@ class GitterFayeSubscriber {
     });
   }
 
+  _ping() {
+    final message = {
+      "data":{"reason":"ping"}
+    };
+    final channel = "/api/v1/ping2";
+    _send(channel, message);
+  }
+
   connect({bool keepAlive: true}) async {
     await _handshake();
     _listener?.cancel();
@@ -75,7 +83,7 @@ class GitterFayeSubscriber {
     _timeoutTimer?.cancel();
     if (keepAlive) {
       _timeoutTimer =
-          new Timer(new Duration(milliseconds: _timeout - 1000), _connect);
+          new Timer(new Duration(milliseconds: _timeout ~/ 2), _ping);
     }
   }
 
