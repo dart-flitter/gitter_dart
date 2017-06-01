@@ -4,7 +4,7 @@ version: 0.1.0
 homepage: https://github.com/dart-flitter/gitter_dart
 authors:
   - Kevin Segaud <segaud.kevin@gmail.com>
-  - Hadrien Lejard <hadrien.lejard@gmail.com
+  - Hadrien Lejard <hadrien.lejard@gmail.com>
 
 environment:
   sdk: '>=1.20.1 <2.0.0'
