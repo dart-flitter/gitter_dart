@@ -221,8 +221,9 @@ class GitterFayeSubscriber {
       }, onDone: onDone, cancelOnError: cancelOnError);
 
   close() {
-    _socket.close();
-    _listener.cancel();
+    _socket?.close();
+    _listener?.cancel();
+    _timeoutTimer?.cancel();
   }
 
   bool get isClose => _socket.closeCode != null;
