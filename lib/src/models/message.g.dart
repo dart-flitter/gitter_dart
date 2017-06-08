@@ -8,6 +8,10 @@ part of gitter.message;
 // **************************************************************************
 
 abstract class _$MessageSerializer implements Serializer<Message> {
+  final DateTimeProcessor sentDateTimeProcessor =
+      const DateTimeProcessor(#sent);
+  final DateTimeProcessor editedAtDateTimeProcessor =
+      const DateTimeProcessor(#editedAt);
   final UserSerialalizer toUserSerialalizer = new UserSerialalizer();
   final MentionSerializer toMentionSerializer = new MentionSerializer();
   final IssueSerializer toIssueSerializer = new IssueSerializer();
@@ -28,11 +32,10 @@ abstract class _$MessageSerializer implements Serializer<Message> {
         ret["html"] = model.html;
       }
       if (model.sent != null) {
-        ret["sent"] = new DateTimeProcessor(#sent).serialize(model.sent);
+        ret["sent"] = sentDateTimeProcessor.serialize(model.sent);
       }
       if (model.editedAt != null) {
-        ret["editedAt"] =
-            new DateTimeProcessor(#editedAt).serialize(model.editedAt);
+        ret["editedAt"] = editedAtDateTimeProcessor.serialize(model.editedAt);
       }
       if (model.fromUser != null) {
         ret["fromUser"] = toUserSerialalizer.toMap(model.fromUser,
@@ -86,9 +89,8 @@ abstract class _$MessageSerializer implements Serializer<Message> {
     model.id = map["id"];
     model.text = map["text"];
     model.html = map["html"];
-    model.sent = new DateTimeProcessor(#sent).deserialize(map["sent"]);
-    model.editedAt =
-        new DateTimeProcessor(#editedAt).deserialize(map["editedAt"]);
+    model.sent = sentDateTimeProcessor.deserialize(map["sent"]);
+    model.editedAt = editedAtDateTimeProcessor.deserialize(map["editedAt"]);
     model.fromUser =
         fromUserSerialalizer.fromMap(map["fromUser"], typeKey: typeKey);
     model.unread = map["unread"];

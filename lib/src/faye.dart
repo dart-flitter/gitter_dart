@@ -188,7 +188,7 @@ class GitterFayeSubscriber {
     });
     if (_mapping.isNotEmpty) {
       _mapping.forEach((String subscription, events) {
-        if (_mapper[subscription]?.isNotEmpty) {
+        if (_mapper[subscription]?.isNotEmpty == true) {
           final list = new List.from(_mapper[subscription]);
           list.forEach((handler) {
             handler(events);

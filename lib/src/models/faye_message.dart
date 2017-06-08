@@ -5,6 +5,9 @@ import 'package:jaguar_serializer/serializer.dart';
 part 'faye_message.g.dart';
 
 @GenSerializer()
+@RawData(#advice)
+@RawData(#data)
+@RawData(#ext)
 class GitterFayeMessageSerializer extends Serializer<GitterFayeMessage>
     with _$GitterFayeMessageSerializer {
   @override

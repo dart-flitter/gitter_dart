@@ -1,2 +1,0 @@
-serializers:
-  - lib/src/models/*.dart
