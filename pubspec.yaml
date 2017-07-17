@@ -1,6 +1,6 @@
 name: gitter
 description: Library to use the Gitter api
-version: 0.1.1
+version: 0.1.2
 homepage: https://github.com/dart-flitter/gitter_dart
 authors:
   - Kevin Segaud <segaud.kevin@gmail.com>
@@ -11,5 +11,4 @@ environment:
 
 dependencies:
   http: ^0.11.3+13
-  jaguar_serializer: ^0.3.0
 

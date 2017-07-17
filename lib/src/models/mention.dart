@@ -1,25 +1,35 @@
 library gitter.mentions;
 
-import 'package:jaguar_serializer/serializer.dart';
-
-part 'mention.g.dart';
-
-@GenSerializer(typeInfo: false)
-class MentionSerializer extends Serializer<Mention> with _$MentionSerializer {
-  @override
-  Mention createModel() => new Mention();
-}
-
 class Mention {
-  static final serializer = new MentionSerializer();
   String screenName;
   String userId;
 
   Mention();
 
   factory Mention.fromJson(Map<String, String> json) =>
-      serializer.fromMap(json);
+      Mention.fromMap(json);
 
   @override
-  String toString() => serializer.toMap(this).toString();
+  String toString() => Mention.toMap(this).toString();
+
+  static Map toMap(Mention model) {
+    Map ret = new Map();
+    if (model != null) {
+      if (model.screenName != null) {
+        ret["screenName"] = model.screenName;
+      }
+      if (model.userId != null) {
+        ret["userId"] = model.userId;
+      }
+    }
+    return ret;
+  }
+
+  static Mention fromMap(Map map) {
+    if (map == null) return null;
+    Mention model = new Mention();
+    model.screenName = map["screenName"];
+    model.userId = map["userId"];
+    return model;
+  }
 }
